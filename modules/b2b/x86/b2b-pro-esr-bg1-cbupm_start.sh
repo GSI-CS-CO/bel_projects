@@ -116,7 +116,7 @@ saft-ecpu-ctl $SDCBU -c 0x13a5802000000000 0xfffffff000000000 200000 0x802 -dg
 saft-ecpu-ctl $SDCBU -c 0x13a6802000000000 0xfffffff000000000 200000 0x802 -dg
 
 # lm32 listens to CMD_B2B_PRINJ message from injection machine, only for B2B
-saft-ecpu-ctl $SDCBU -c 0x13a6803000000000 0xfffffff000000000 200000 0x803 -d
+saft-ecpu-ctl $SDCBU -c 0x13a6803000000000 0xfffffff000000000 200000 0x803 -dg
 
 # diag: generate pulse upon CMD_B2B_START event
 # sacrifice IO1 for 'jitter check'

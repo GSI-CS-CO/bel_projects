@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Aug-2024
+ *  version : 19-nov-2026
  *
  *  user interface for B2B
  *
@@ -115,11 +115,12 @@ void getEbDevice(ring_t ring, char *ebDevice)
   char   ebesr[MAXLEN];
   char   ebyr[MAXLEN];
 
+  ebDevice[0] = '\0';                                  // empty name if expert par file is missing
   sprintf(parname, "%s/%s", path, MENUPAR_EXPERT);
   if ((parfile = fopen(parname,"r"))) {
-    fscanf(parfile,"%s",ebsis);
-    fscanf(parfile,"%s",ebesr);
-    fscanf(parfile,"%s",ebyr);
+    if (fscanf(parfile,"%255s",ebsis) != 1) ebsis[0] = '\0';
+    if (fscanf(parfile,"%255s",ebesr) != 1) ebesr[0] = '\0';
+    if (fscanf(parfile,"%255s",ebyr)  != 1) ebyr[0]  = '\0';
     fclose(parfile);
     
     if (ring == SIS18)   sprintf(ebDevice, "%s", ebsis);
@@ -129,28 +130,33 @@ void getEbDevice(ring_t ring, char *ebDevice)
 } // getEbDevice
 
 
-void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *flagLsa ,double *cTrigExt, double *cTrigInj, double *cPhase)
+int parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *flagLsa ,double *cTrigExt, double *cTrigInj, double *cPhase)
 {
   int   ok;
   FILE  *parfile;
   
-  // read file with parameters
+  // read file with parameters; fscanf returns EOF (-1) at end of file, so compare with '1'
   if ((parfile = fopen(filename,"r"))) {
-    ok         = fscanf(parfile,"%s" , comment);
-    if (ok) ok = fscanf(parfile,"%d" , mode);
-    if (ok) ok = fscanf(parfile,"%d" , ringInj);
-    if (ok) ok = fscanf(parfile,"%lf", fH1Ext);
-    if (ok) ok = fscanf(parfile,"%d" , nHExt);
-    if (ok) ok = fscanf(parfile,"%lf", fH1Inj);
-    if (ok) ok = fscanf(parfile,"%d" , nHInj);
-    if (ok) ok = fscanf(parfile,"%d" , flagLsa);
-    if (ok) ok = fscanf(parfile,"%lf", cTrigExt);
-    if (ok) ok = fscanf(parfile,"%lf", cTrigInj);
-    if (ok) ok = fscanf(parfile,"%lf", cPhase);
+    ok         = (fscanf(parfile,"%255s", comment)  == 1);
+    if (ok) ok = (fscanf(parfile,"%d"   , mode)     == 1);
+    if (ok) ok = (fscanf(parfile,"%d"   , ringInj)  == 1);
+    if (ok) ok = (fscanf(parfile,"%lf"  , fH1Ext)   == 1);
+    if (ok) ok = (fscanf(parfile,"%d"   , nHExt)    == 1);
+    if (ok) ok = (fscanf(parfile,"%lf"  , fH1Inj)   == 1);
+    if (ok) ok = (fscanf(parfile,"%d"   , nHInj)    == 1);
+    if (ok) ok = (fscanf(parfile,"%d"   , flagLsa)  == 1);
+    if (ok) ok = (fscanf(parfile,"%lf"  , cTrigExt) == 1);
+    if (ok) ok = (fscanf(parfile,"%lf"  , cTrigInj) == 1);
+    if (ok) ok = (fscanf(parfile,"%lf"  , cPhase)   == 1);
     fclose(parfile);
     if (!ok) die("read config for SID: ", 1);
   } // if parfile
-  else printf("can't read parfile - %s!\n", filename);
+  else {
+    printf("can't read parfile - %s!\n", filename);
+    return 0;                                         // values are not set: caller must not use them
+  } // else parfile
+
+  return 1;
 } // parfileReadSID
 
 void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int flagLsa, double cTrigExt, double cTrigInj, double cPhase)
@@ -228,7 +234,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   } // switch ring
   
   // read file with parameters
-  parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase);
+  if (!parfileReadSID(parname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase)) return;
 
   // submit parameters to FW
   errorFlag = 0;
@@ -241,6 +247,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
     printf("%s\n", b2b_status_text(status));
     getchar();
   } // if errorFlag
+  else b2b_cmd_submit(ebDevice);                     // submit now; the firmware has only one staging area, the next upload would overwrite it
 } // submitSid
 
 
@@ -305,7 +312,7 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
       die("illegal parameter", knob);
   } // switch inum
   
-  parfileReadSID(sidparname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase);
+  if (!parfileReadSID(sidparname, comment, &mode, &ringInj, &fH1Ext, &nHExt, &fH1Inj, &nHInj, &flagLsa, &cTrigExt, &cTrigInj, &cPhase)) {getchar(); return;}
 
   switch (ring) {
     case SIS18 :

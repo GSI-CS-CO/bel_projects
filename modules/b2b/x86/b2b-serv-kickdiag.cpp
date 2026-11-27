@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-oct-2026
+ *  version : 19-nov-2026
  *
  * publishes additional diagnostic data of the kicker
  *
@@ -162,7 +162,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
 
   // check ranges
-  if (recSid  > B2B_NSID)                  return;
+  if (recSid  >= B2B_NSID)                 return;
   if (tag > tagKStop)                      return;
   if ((!flagActive) && (tag != tagKStart)) return;
 
@@ -342,7 +342,7 @@ int main(int argc, char** argv)
         break;
       case 'm' :
         reqMode = strtol(optarg, &tail, 0);
-        if (reqMode > 1) fprintf(stderr, "parameter out of range)\n");
+        if (reqMode > 1) {fprintf(stderr, "option -m: parameter out of range\n"); return 1;}
         if (*tail != 0) {
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
           return 1;

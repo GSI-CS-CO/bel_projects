@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-aug-2026
+ *  version : 13-nov-2026
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000816                                       // make this consistent with makefile
+#define B2BKD_FW_VERSION 0x000816                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -138,7 +138,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
     *reqState = COMMON_STATE_FATAL;
     DBPRINT1("b2b-kd: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal  = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  else if (idx > cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("b2b-kd: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("b2b-kd: fw common shared begin   0x%08x\n", pShared);
@@ -357,7 +357,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // we received kicker trigger and monitor signal from electronics: perfect
   if (flagRecTrig && flagRecMon) {
     dKickMon           = tKickMon - tKickTrig;
-    if (abs(dKickMon) < B2B_ACCEPTKMON * 1000) {                   // check for coincidence
+    if (llabs(dKickMon) < B2B_ACCEPTKMON * 1000) {                   // check for coincidence
       flagSendMessage  = 1;                                        
       
       if (flagRecProbe)  dKickProbe = tKickProbe - tKickTrig;
@@ -370,7 +370,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   if (flagRecTrig) {
     // check, if we got a kicker trigger but not yet a monitor signal
-    if (abs(getSysTime() - tKickTrig) > B2B_ACCEPTKMON * 1000) {    
+    if (llabs((int64_t)(getSysTime() - tKickTrig)) > B2B_ACCEPTKMON * 1000) {
       if (flagIsExt) flagsError |=  B2B_ERRFLAG_KDEXT;
       else           flagsError |=  B2B_ERRFLAG_KDINJ;
       flagSendMessage            = 1;
@@ -383,7 +383,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   if (flagRecMon) {
     // check, if we got a monitor signal but not yet a kicker trigger
-    if (abs(getSysTime() - tKickMon) > B2B_ACCEPTKMON * 1000) flagRecMon = 0;
+    if (llabs((int64_t)(getSysTime() - tKickMon)) > B2B_ACCEPTKMON * 1000) flagRecMon = 0;
   } // if flagRecTrig
   
   if (flagSendMessage) {
@@ -468,7 +468,7 @@ int main(void) {
 
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, sharedSize, SHARED_OFFS, "b2b-kd", B2BPM_FW_VERSION); // init common stuff
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "b2b-kd", B2BKD_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                          // clear common diagnostics data
   
   while (1) {

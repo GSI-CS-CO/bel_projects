@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Aug-2024
+ *  version : 19-nov-2026
  *
  * Command-line interface for b2b
  *
@@ -60,9 +60,9 @@ static int ddsValue   = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
 
-static void die(const char* where, eb_status_t status) {
+static void die(const char* where, uint32_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
+          program, where, b2b_status_text(status)); 
   exit(1);
 } //die
 

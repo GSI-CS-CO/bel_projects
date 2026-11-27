@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-dec-2024
+ *  version : 19-nov-2026
  *
  * archives set and get values to data files
  *
@@ -133,6 +133,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
   flagGetValid[sid] = (*size != sizeof(uint32_t));
+  if (!flagGetValid[sid])             return;
   
   strftime(tCBS, 52, "%d-%b-%Y_%H:%M:%S", gmtime(&(utc_secs[sid])));
 
@@ -303,7 +304,7 @@ int main(int argc, char** argv) {
         break;
       case 'f' :
         tmp = strtok(optarg, " ");
-        if (strlen(tmp) == 0) {
+        if ((tmp == NULL) || (strlen(tmp) == 0)) {
           fprintf(stderr, "Specify a proper name, not '%s'!\n", optarg);
           exit(1);
         } // if strlen
@@ -335,7 +336,7 @@ int main(int argc, char** argv) {
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ARCHIVER_VERSION));
 
   for (i=0; i<B2B_NSID; i++) {
-    sprintf(filename[i], "%s_%s_sid%02d.dat", fprefix, sprefix, i);
+    snprintf(filename[i], sizeof(filename[i]), "%s_%s_sid%02d.dat", fprefix, sprefix, i);
     printf("open data file %s\n", filename[i]);
     if (!(dataFile = fopen(filename[i], fileMode))) {
       fprintf(stderr, "%s: can't open file %s\n", program, filename[i]);
